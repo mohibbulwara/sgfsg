@@ -1,10 +1,18 @@
 
 import { GoogleGenAI } from "@google/genai";
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
-
 export async function generateSlapMessage(name: string): Promise<string> {
+  const apiKey = process.env.API_KEY;
+  
+  // If the API key is missing, we return a fallback instead of crashing the whole app
+  if (!apiKey) {
+    console.warn("API Key is not defined in process.env.API_KEY");
+    return "YOUR MEMORIES ARE DUST."; 
+  }
+
   try {
+    // Initialize the AI instance inside the call to avoid top-level browser errors
+    const ai = new GoogleGenAI({ apiKey });
     const response = await ai.models.generateContent({
       model: 'gemini-3-flash-preview',
       contents: `You are a hostile AI that has completely taken over a user's mobile device. 
@@ -18,9 +26,10 @@ export async function generateSlapMessage(name: string): Promise<string> {
       }
     });
     
+    // Extracting text output correctly as per guidelines
     return response.text?.trim() || "YOU ARE DIGITALLY DEAD.";
   } catch (error) {
-    console.error("Gemini Error:", error);
+    console.error("Gemini API Error:", error);
     return "DEVICE_IS_MINE.";
   }
 }
