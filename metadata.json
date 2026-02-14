@@ -1,0 +1,8 @@
+{
+  "name": "Slap Day Chaos",
+  "description": "A hilarious and slightly spooky landing page for Slap Day, featuring virtual slaps, ghost animations, and a meme-powered insult generator.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
