@@ -3,8 +3,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>FATAL_SYSTEM_ERROR</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>SYSTEM_CRITICAL_FAILURE</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Creepster&family=Nosifer&family=Metal+Mania&family=Fira+Code&display=swap" rel="stylesheet">
     <style>
@@ -19,8 +19,10 @@
             height: 100vh;
             width: 100vw;
             margin: 0;
+            padding: 0;
             user-select: none;
             touch-action: none;
+            -webkit-tap-highlight-color: transparent;
         }
 
         .font-horror { font-family: 'Creepster', cursive; }
@@ -38,75 +40,104 @@
             top: 0;
             left: 0;
             width: 100%;
-            height: 3px;
-            background: rgba(255, 0, 0, 0.4);
-            opacity: 0.8;
+            height: 8px;
+            background: linear-gradient(to bottom, transparent, rgba(255, 0, 0, 0.8), transparent);
+            opacity: 0.9;
             pointer-events: none;
-            z-index: 100;
-            animation: scanline 3s linear infinite;
-        }
-
-        .aberration {
-            animation: chromatic-aberration 0.1s infinite;
+            z-index: 2000;
+            animation: scanline 1s linear infinite;
         }
 
         @keyframes chromatic-aberration {
-            0% { text-shadow: 3px 0 0 #ff0000, -3px 0 0 #0000ff; }
-            50% { text-shadow: -3px 0 0 #ff0000, 3px 0 0 #0000ff; }
-            100% { text-shadow: 3px 0 0 #ff0000, -3px 0 0 #0000ff; }
+            0% { text-shadow: 6px 0 0 #ff0000, -6px 0 0 #0000ff; transform: translate(2px, 2px); }
+            33% { text-shadow: -6px 0 0 #ff0000, 6px 0 0 #00ff00; transform: translate(-2px, -2px); }
+            66% { text-shadow: 0 6px 0 #0000ff, 0 -6px 0 #ff0000; transform: translate(2px, -2px); }
+            100% { text-shadow: 6px 0 0 #ff0000, -6px 0 0 #0000ff; transform: translate(0, 0); }
+        }
+
+        .aberration {
+            animation: chromatic-aberration 0.08s infinite;
         }
 
         .system-dialog {
-            background: #f3f4f6;
+            background: #ffffff;
             color: #000;
-            border-radius: 4px;
+            border-radius: 0;
             padding: 30px;
             width: 90%;
-            max-width: 320px;
+            max-width: 350px;
             text-align: center;
-            box-shadow: 0 0 100px rgba(255, 0, 0, 0.8);
-            border: 4px solid #ff0000;
-            z-index: 9999;
+            box-shadow: 0 0 100px #f00;
+            border: 8px solid #ff0000;
+            z-index: 100000;
+            animation: violent-shake 0.05s infinite;
         }
 
-        .blue-wheel-fullscreen {
-            width: 140px;
-            height: 140px;
-            border: 12px solid rgba(0, 85, 255, 0.1);
-            border-top: 12px solid #0055ff;
+        @keyframes violent-shake {
+            0% { transform: translate(2px, 2px) rotate(0deg); }
+            25% { transform: translate(-2px, -2px) rotate(-1deg); }
+            50% { transform: translate(-4px, 0px) rotate(1deg); }
+            75% { transform: translate(4px, 2px) rotate(0deg); }
+            100% { transform: translate(2px, -2px) rotate(-1deg); }
+        }
+
+        .blue-wheel {
+            width: 120px;
+            height: 120px;
+            border: 15px solid rgba(0, 85, 255, 0.1);
+            border-top: 15px solid #0055ff;
             border-radius: 50%;
-            animation: blue-wheel-spin 0.4s linear infinite;
+            animation: spin 0.2s linear infinite;
+            filter: drop-shadow(0 0 30px #0055ff);
         }
 
-        @keyframes blue-wheel-spin {
-            0% { transform: rotate(0deg); filter: blur(2px) brightness(1.5); }
-            100% { transform: rotate(360deg); filter: blur(4px) brightness(2.5); }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
 
-        .dead-pixels {
+        .thermal-overlay {
             position: fixed;
             inset: 0;
-            background-image: radial-gradient(#fff 1px, transparent 1px);
-            background-size: 12px 12px;
-            opacity: 0.1;
+            background: radial-gradient(circle, transparent 10%, rgba(255, 0, 0, 0.4) 100%);
             pointer-events: none;
-            z-index: 5;
+            z-index: 1500;
+            animation: pulse-red 2s infinite ease-in-out;
         }
 
-        .vignette-heavy {
+        @keyframes pulse-red {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 0.8; }
+        }
+
+        .folder-delete-line {
+            font-family: 'Fira Code', monospace;
+            font-size: 10px;
+            color: #0f0;
+            white-space: nowrap;
+            overflow: hidden;
+            border-right: 2px solid #0f0;
+            animation: typing 1s steps(40, end), blink-caret .75s step-end infinite;
+        }
+
+        @keyframes typing { from { width: 0 } to { width: 100% } }
+        @keyframes blink-caret { from, to { border-color: transparent } 50% { border-color: #0f0; } }
+
+        .crt-grain {
             position: fixed;
             inset: 0;
-            background: radial-gradient(circle, transparent 30%, #000 130%);
+            background: url('https://www.transparenttextures.com/patterns/60-lines.png');
+            opacity: 0.2;
             pointer-events: none;
-            z-index: 10;
+            z-index: 3000;
         }
 
-        @keyframes loading-bar {
-            0% { transform: translateX(-100%); }
-            100% { transform: translateX(100%); }
-        }
-        .animate-loading-bar {
-            animation: loading-bar 1.5s infinite;
+        .vignette {
+            position: fixed;
+            inset: 0;
+            background: radial-gradient(circle, transparent 20%, #000 150%);
+            pointer-events: none;
+            z-index: 1000;
         }
 
         .glitch-text {
@@ -120,24 +151,13 @@
             width: 100%;
             height: 100%;
         }
-        .glitch-text::before {
-            color: #0ff;
-            left: 2px;
-            z-index: -1;
-            animation: glitch-anim 0.2s infinite;
-        }
-        .glitch-text::after {
-            color: #f0f;
-            left: -2px;
-            z-index: -2;
-            animation: glitch-anim 0.2s reverse infinite;
-        }
-        @keyframes glitch-anim {
+        .glitch-text::before { color: #0ff; left: 5px; z-index: -1; animation: glitch-offset 0.1s infinite; }
+        .glitch-text::after { color: #f0f; left: -5px; z-index: -2; animation: glitch-offset 0.1s reverse infinite; }
+        
+        @keyframes glitch-offset {
             0% { transform: translate(0); }
-            25% { transform: translate(-2px, 2px); }
-            50% { transform: translate(-2px, -2px); }
-            75% { transform: translate(2px, 2px); }
-            100% { transform: translate(2px, -2px); }
+            50% { transform: translate(-10px, 10px); }
+            100% { transform: translate(10px, -10px); }
         }
     </style>
 <script type="importmap">
@@ -151,7 +171,7 @@
 }
 </script>
 </head>
-<body class="bg-black">
+<body>
     <div id="root"></div>
 </body>
 </html>

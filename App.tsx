@@ -2,25 +2,41 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { generateSlapMessage } from './services/gemini';
 
+const DESTRUCTION_STAGES = [
+  { folder: "/sdcard/DCIM/Camera", count: "1,244 photos" },
+  { folder: "/data/data/com.whatsapp/databases", count: "89 databases" },
+  { folder: "/data/data/com.android.chrome/app_tabs", count: "42 sessions" },
+  { folder: "/sdcard/WhatsApp/Media", count: "5,601 files" },
+  { folder: "/data/data/com.instagram.android/cache", count: "1.2 GB" },
+  { folder: "/data/system/users/0/fpdata", count: "Biometric Root" },
+  { folder: "/data/data/com.android.vending/purchase_history", count: "Full Access" },
+  { folder: "/system/priv-app/Settings", count: "Override Active" },
+  { folder: "/data/data/com.bank.app/keys", count: "ENCRYPTED" },
+  { folder: "/data/data/com.crypto.wallet/seed", count: "EXFILTRATED" },
+];
+
 const HACK_LOGS = [
-  "INITIALIZING ROOT_KIT_0x666...",
-  "BYPASSING KERNEL_WATCHDOG...",
-  "DUMPING GEOLOCATION_HISTORY...",
-  "ACCESSING FRONT_CAMERA_STREAM...",
-  "ENCRYPTING USER_FILES (AES-4096)...",
-  "DELETING SYSTEM_RECOVERY_PARTITION...",
-  "CONTACT_LIST_EXFILTRATED: 100%",
-  "WIPING BIOMETRIC_DATABASE...",
-  "ESTABLISHING PERMANENT_BACKDOOR...",
-  "YOU ARE NO LONGER IN CONTROL.",
+  "ROOTING ANDROID_V14_KERNEL...",
+  "BYPASSING KNOX_SECURITY...",
+  "DUMPING IMEI & SERIAL_NUMBER...",
+  "UPLOADING CLOUD_BACKUP_TOKENS...",
+  "SIM_CARD_CLONING: IN_PROGRESS...",
+  "ACCESSING_FRONT_PANE_MIC...",
+  "THERMAL_LIMIT: REMOVED",
+  "CPU_CORE_0_VOLTAGE: 1.45V",
+  "WIPING_BOOTLOADER_SIGNATURE...",
+  "DELETING_FACTORY_RESET_IMAGE...",
+  "ESTABLISHING_REVERSE_SHELL...",
+  "YOUR_PHONE_IS_A_ZOMBIE_NODE.",
 ];
 
 const App: React.FC = () => {
-  const [gameState, setGameState] = useState<'start' | 'waiting' | 'scare' | 'hacked' | 'locked'>('start');
+  const [gameState, setGameState] = useState<'start' | 'waiting' | 'scare' | 'hacking' | 'wiping' | 'locked'>('start');
   const [message, setMessage] = useState("");
   const [logs, setLogs] = useState<string[]>([]);
+  const [wipeProgress, setWipeProgress] = useState(0);
+  const [currentFolder, setCurrentFolder] = useState("");
   const [fakeAlert, setFakeAlert] = useState<string | null>(null);
-  const [isError, setIsError] = useState(false);
   const audioContext = useRef<AudioContext | null>(null);
 
   const initAudioAndFullscreen = () => {
@@ -31,242 +47,213 @@ const App: React.FC = () => {
       if (audioContext.current.state === 'suspended') {
         audioContext.current.resume();
       }
-      
-      // Fullscreen attempt - trap user
       if (document.documentElement.requestFullscreen) {
         document.documentElement.requestFullscreen().catch(() => {});
       }
     } catch (err) {
-      console.warn("Media blocked", err);
+      console.warn("Blocked by browser policy", err);
     }
   };
 
-  const playGlitchSound = (duration: number = 0.5, type: 'impact' | 'static') => {
+  const playHeavySound = (freq: number, dur: number, type: OscillatorType = 'sawtooth') => {
     if (!audioContext.current) return;
     const ctx = audioContext.current;
-    const now = ctx.currentTime;
-    
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
-    
-    if (type === 'impact') {
-      osc.type = 'sawtooth';
-      osc.frequency.setValueAtTime(60, now);
-      osc.frequency.exponentialRampToValueAtTime(1, now + duration);
-      gain.gain.setValueAtTime(1.5, now);
-    } else {
-      osc.type = 'square';
-      osc.frequency.setValueAtTime(Math.random() * 5000 + 100, now);
-      gain.gain.setValueAtTime(0.3, now);
-    }
-
-    gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(1, ctx.currentTime + dur);
+    gain.gain.setValueAtTime(0.5, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + dur);
     osc.connect(gain);
     gain.connect(ctx.destination);
     osc.start();
-    osc.stop(now + duration);
+    osc.stop(ctx.currentTime + dur);
   };
 
-  const startSequence = async () => {
+  const startDestruction = async () => {
     initAudioAndFullscreen();
     setGameState('waiting');
     
-    try {
-      const reason = await generateSlapMessage("victim");
-      setMessage(reason);
-    } catch (err) {
-      setMessage("YOUR LIFE IS COMPROMISED.");
-    }
+    // Predetermine the terrifying fate
+    const fate = await generateSlapMessage("victim");
+    setMessage(fate);
 
-    // Sequence timing
     setTimeout(() => {
       setGameState('scare');
-      playGlitchSound(0.3, 'impact');
+      playHeavySound(50, 0.4, 'square');
       
       setTimeout(() => {
-        setGameState('hacked');
-        
+        setGameState('hacking');
         let i = 0;
-        const logInterval = setInterval(() => {
-          setLogs(prev => [...prev, HACK_LOGS[i % HACK_LOGS.length]]);
-          playGlitchSound(0.05, 'static');
+        const logInt = setInterval(() => {
+          setLogs(prev => [...prev, HACK_LOGS[i % HACK_LOGS.length]].slice(-10));
+          playHeavySound(Math.random() * 2000 + 100, 0.05, 'sawtooth');
           i++;
-          if (i === 4) setFakeAlert("CRITICAL: HARDWARE ENCRYPTION TRIGGERED");
-          if (i === 10) {
-            clearInterval(logInterval);
+          if (i === 4) setFakeAlert("SYSTEM: SECURITY POLICY VIOLATION. FRONT CAMERA ENABLED.");
+          if (i === 8) setFakeAlert("THERMAL: BATTERY TEMPERATURE 85°C. SHUTDOWN PREVENTED.");
+          if (i >= HACK_LOGS.length) {
+            clearInterval(logInt);
             setFakeAlert(null);
-            setGameState('locked');
-            playGlitchSound(2.0, 'impact');
+            setGameState('wiping');
+            startWipingSequence();
           }
-        }, 300);
+        }, 400);
       }, 500);
     }, 2500);
   };
 
-  // Prevent browser exit
+  const startWipingSequence = () => {
+    let folderIdx = 0;
+    const wipeInt = setInterval(() => {
+      setWipeProgress(p => {
+        const next = p + 1;
+        if (next % 10 === 0 && folderIdx < DESTRUCTION_STAGES.length) {
+          setCurrentFolder(DESTRUCTION_STAGES[folderIdx].folder + " (" + DESTRUCTION_STAGES[folderIdx].count + ")");
+          folderIdx++;
+          playHeavySound(20, 0.5, 'sine');
+        }
+        if (next >= 100) {
+          clearInterval(wipeInt);
+          setTimeout(() => setGameState('locked'), 1000);
+        }
+        return next;
+      });
+    }, 200); // 20 seconds total for wiping
+  };
+
   useEffect(() => {
-    const lockHistory = () => {
-      window.history.pushState(null, "", window.location.href);
-    };
-    window.addEventListener('popstate', lockHistory);
+    const handleBack = () => window.history.pushState(null, "", window.location.href);
+    window.addEventListener('popstate', handleBack);
     window.history.pushState(null, "", window.location.href);
 
-    const warnBeforeClose = (e: BeforeUnloadEvent) => {
+    const handleLeave = (e: BeforeUnloadEvent) => {
       e.preventDefault();
-      e.returnValue = "SYSTEM OVERRIDE: DATA PURGE IN PROGRESS.";
+      e.returnValue = "DELETING SYSTEM FILES. REBOOTING NOW WILL DESTROY YOUR MOTHERBOARD.";
     };
-    window.addEventListener('beforeunload', warnBeforeClose);
+    window.addEventListener('beforeunload', handleLeave);
 
     return () => {
-      window.removeEventListener('popstate', lockHistory);
-      window.removeEventListener('beforeunload', warnBeforeClose);
+      window.removeEventListener('popstate', handleBack);
+      window.removeEventListener('beforeunload', handleLeave);
     };
   }, []);
 
-  // Root error handler to prevent black screen
-  if (isError) {
-    return (
-      <div className="h-screen w-screen bg-red-900 flex items-center justify-center p-10 font-terminal text-white">
-        <div className="text-center space-y-4">
-          <h1 className="text-6xl font-scary-title">FATAL_ERROR</h1>
-          <p className="text-xl">THE SYSTEM HAS COLLAPSED. DO NOT REBOOT.</p>
-          <button onClick={() => setIsError(false)} className="border-2 border-white px-8 py-4">RETRY_PURGE</button>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <div className={`h-screen w-screen flex items-center justify-center relative bg-black overflow-hidden font-terminal ${gameState === 'scare' ? 'bg-white violent-shake' : ''}`}>
-      {/* Visual Overlays */}
+    <div className={`fixed inset-0 flex flex-col items-center justify-center bg-black overflow-hidden font-terminal ${gameState === 'scare' ? 'bg-white violent-shake' : ''}`}>
       <div className="scanline" />
-      <div className="dead-pixels" />
-      <div className="vignette-heavy" />
+      <div className="vignette" />
+      <div className="crt-grain" />
+      {gameState !== 'start' && <div className="thermal-overlay" />}
 
-      {/* State Machine UI */}
       {gameState === 'start' && (
-        <div className="z-[200] text-center p-10 space-y-12 animate-pulse">
+        <div className="z-[3000] text-center p-6 space-y-12 max-w-xs">
           <div className="space-y-2">
-            <h1 className="font-scary-title text-5xl md:text-9xl text-red-700 aberration" data-text="FATAL_REVENGE">
-              FATAL_REVENGE
-            </h1>
-            <p className="text-red-900 text-sm tracking-[1.2em] uppercase opacity-50">Remote Access Pending</p>
+            <h1 className="font-scary-title text-4xl text-red-600 aberration" data-text="SLAP_REVENGE">SLAP_REVENGE</h1>
+            <p className="text-red-900 text-[10px] tracking-[0.5em] uppercase">Mobile Root Required</p>
           </div>
-          
           <button 
-            onClick={startSequence}
-            className="group relative inline-block px-14 py-10 bg-black border-4 border-red-700 font-metal text-5xl md:text-7xl text-red-600 hover:bg-white hover:text-black transition-all active:scale-95 shadow-[0_0_50px_rgba(255,0,0,0.4)]"
+            onClick={startDestruction}
+            className="w-full py-12 bg-red-950 border-4 border-red-600 text-red-500 font-metal text-5xl active:scale-150 active:bg-white active:text-black transition-all shadow-[0_0_50px_#f00]"
           >
-            EXECUTE_SLAP.BAT
+            ENTER_VOID
           </button>
-          
-          <div className="text-red-950 text-[10px] pt-12 opacity-30 select-none">
-            [SYS] BOOT_ID: {Math.random().toString(36).substring(7)} <br/>
-            [SYS] STATUS: MALICIOUS_PAYLOAD_READY
+          <div className="text-[8px] text-red-900 opacity-30 text-left space-y-1">
+             <p>[SYS] DEVICE: DETECTED</p>
+             <p>[SYS] DATA_VOLUME: 256GB</p>
+             <p>[SYS] STATUS: VULNERABLE</p>
           </div>
         </div>
       )}
 
       {gameState === 'waiting' && (
-        <div className="z-[200] text-center space-y-12">
-          <div className="blue-wheel-fullscreen mx-auto" />
-          <p className="font-horror text-5xl text-blue-600 animate-pulse tracking-widest uppercase">Breaching Device...</p>
-          <div className="h-1 w-64 bg-blue-900 mx-auto overflow-hidden">
-            <div className="h-full bg-blue-500 animate-loading-bar" />
-          </div>
+        <div className="z-[3000] text-center space-y-8">
+          <div className="blue-wheel mx-auto" />
+          <p className="font-horror text-4xl text-blue-600 animate-pulse uppercase">Breaching Knox...</p>
         </div>
       )}
 
       {gameState === 'scare' && (
         <div className="fixed inset-0 z-[10000] flex items-center justify-center">
-          <span className="text-[60rem] drop-shadow-[0_0_80px_#ff0000]">👺</span>
+          <span className="text-[40rem] filter contrast-200">👺</span>
         </div>
       )}
 
-      {gameState === 'hacked' && (
-        <div className="fixed inset-0 z-[8000] flex flex-col items-center justify-center p-6">
-          <div className="absolute inset-0 bg-black/95 backdrop-blur-[40px]" />
-          
-          <div className="relative z-[8001] w-full max-w-xl space-y-10">
-            <div className="text-center">
-              <div className="blue-wheel-fullscreen inline-block mb-6 scale-75" />
-              <h2 className="text-4xl text-[#0055ff] font-bold animate-pulse uppercase">Device Encryption Active</h2>
-            </div>
-
-            <div className="h-80 overflow-hidden border-l-4 border-blue-900 bg-black/50 p-6 space-y-3 shadow-inner">
-              {logs.map((log, i) => (
-                <div key={i} className="text-blue-500 text-sm md:text-base opacity-80 animate-pulse">{`> ${log}`}</div>
-              ))}
-            </div>
+      {gameState === 'hacking' && (
+        <div className="z-[3000] w-full px-6 space-y-10">
+          <div className="text-center">
+            <div className="blue-wheel mx-auto scale-75 mb-4" />
+            <h2 className="text-2xl text-blue-500 font-bold animate-pulse">REMOTE ACCESS GRANTED</h2>
           </div>
-
+          <div className="h-64 border-l-2 border-red-900 pl-4 space-y-2 overflow-hidden">
+            {logs.map((log, i) => (
+              <div key={i} className="text-[10px] text-red-600 opacity-80">{`>> ${log}`}</div>
+            ))}
+          </div>
           {fakeAlert && (
-            <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[9001] system-dialog">
-              <div className="text-red-600 text-6xl mb-4 animate-bounce">⚠️</div>
-              <h3 className="font-bold text-xl mb-2 text-black">SYSTEM FAILURE</h3>
-              <p className="text-sm font-terminal mb-6 text-slate-800">{fakeAlert}</p>
-              <div className="h-1 w-full bg-slate-300 mb-4 rounded-full overflow-hidden">
-                <div className="h-full bg-red-600 animate-pulse w-1/2" />
-              </div>
+            <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 system-dialog">
+              <div className="text-red-600 text-6xl mb-4">⚠️</div>
+              <h3 className="font-bold text-lg mb-2 text-black uppercase">Android System</h3>
+              <p className="text-xs mb-6 text-black font-terminal leading-tight">{fakeAlert}</p>
+              <button className="w-full bg-red-600 text-white font-bold py-3">EMERGENCY_CANCEL</button>
             </div>
           )}
         </div>
       )}
 
-      {gameState === 'locked' && (
-        <div className="fixed inset-0 z-[9999] bg-[#030000] flex flex-col items-center justify-center p-6 text-center">
-          <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-20 pointer-events-none" />
-          <div className="absolute top-0 left-0 w-full h-2 bg-red-800 glitch-overlay" />
-          
-          <div className="relative z-10 space-y-14 w-full max-w-5xl">
-            <div className="space-y-4">
-              <h2 className="font-scary-title text-6xl md:text-9xl text-red-600 glitch-text tracking-tighter" data-text="SYSTEM_OWNED">
-                SYSTEM_OWNED
-              </h2>
-              <div className="h-2 w-full bg-gradient-to-r from-transparent via-red-950 to-transparent" />
+      {gameState === 'wiping' && (
+        <div className="z-[3000] w-full px-10 text-center space-y-12">
+          <div className="space-y-4">
+            <h2 className="text-red-600 font-scary-title text-3xl animate-pulse">DELETING ALL DATA</h2>
+            <div className="h-4 w-full bg-red-950 rounded-full border border-red-800 overflow-hidden">
+              <div className="h-full bg-red-500 shadow-[0_0_20px_#f00]" style={{ width: `${wipeProgress}%` }} />
             </div>
+            <div className="flex justify-between text-[10px] text-red-900 font-terminal">
+              <span>{wipeProgress}% COMPLETE</span>
+              <span>WIPING_STORAGE...</span>
+            </div>
+          </div>
 
-            <div className="p-12 md:p-24 border-[12px] border-red-900 bg-black shadow-[0_0_100px_rgba(255,0,0,0.3)] transform -rotate-1 relative overflow-hidden">
-              <div className="absolute inset-0 opacity-10 pointer-events-none bg-[url('https://www.transparenttextures.com/patterns/asfalt-dark.png')]" />
-              <p className="relative font-metal text-6xl md:text-[10rem] text-white leading-[0.8] tracking-tighter mb-10 drop-shadow-[0_0_20px_rgba(255,255,255,0.5)]">
-                "{message.toUpperCase()}"
-              </p>
-              <div className="relative flex flex-col items-center gap-6">
-                <p className="font-horror text-5xl md:text-8xl text-red-600 flicker">
-                  THE SLAP IS PERMANENT
-                </p>
-                <div className="flex gap-4 opacity-40 grayscale text-[10px] font-terminal uppercase">
-                  <span>CPU: ERROR</span>
-                  <span>DISK: WIPED</span>
-                  <span>IP: 166.66.6.66</span>
-                </div>
-              </div>
-            </div>
+          <div className="bg-red-950/20 p-4 h-32 border border-red-900/40 text-left overflow-hidden">
+             <div className="folder-delete-line">{`Wiping: ${currentFolder}`}</div>
+             <div className="text-[8px] text-red-800 mt-2">
+               {`[INFO] UNLINKING_NODES: 0x${Math.random().toString(16).slice(2, 10)}`}
+             </div>
+          </div>
 
-            <div className="space-y-4">
-              <p className="text-red-900 font-terminal text-sm animate-pulse tracking-widest">
-                CRITICAL_MALWARE_ID: SLAP_DAY_2024
-              </p>
-              <button 
-                onClick={() => {
-                  setGameState('hacked');
-                  setTimeout(() => setGameState('locked'), 3000);
-                }}
-                className="opacity-20 hover:opacity-100 font-terminal text-red-600 text-xs border-b border-red-600 transition-all hover:tracking-[0.5em]"
-              >
-                [ FORCE_SYSTEM_REBOOT ]
-              </button>
-            </div>
+          <div className="text-red-600 text-[10px] font-terminal animate-pulse">
+            DO NOT MINIMIZE APP - DATA CORRUPTION WILL BE PERMANENT
           </div>
         </div>
       )}
 
-      {/* Spooky Telemetry */}
-      <div className="fixed top-6 right-6 font-mono text-[9px] text-red-950/40 select-none text-right z-10">
-        SYS_LOG: BUFFER_OVERFLOW <br/>
-        AUTH: BYPASSED <br/>
-        GPS: LOCKED <br/>
-        {new Date().toISOString()}
+      {gameState === 'locked' && (
+        <div className="z-[3000] text-center p-6 space-y-10 max-w-md">
+          <div className="space-y-4">
+            <h2 className="font-scary-title text-5xl text-red-600 glitch-text tracking-tight" data-text="DEVICE_OWNED">DEVICE_OWNED</h2>
+            <div className="h-1 w-full bg-red-900" />
+          </div>
+
+          <div className="p-8 border-4 border-red-700 bg-black shadow-[0_0_80px_#f00] relative transform -rotate-1">
+             <p className="font-metal text-6xl text-white leading-none mb-6">
+                "{message.toUpperCase()}"
+             </p>
+             <p className="font-horror text-4xl text-red-600 flicker">THE SLAP IS FINAL</p>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4 text-[9px] text-red-950 uppercase opacity-40 font-terminal">
+            <div className="text-right border-r border-red-950 pr-2">PHOTOS: WIPED<br/>WHATSAPP: DELETED<br/>BANK_APPS: LOCKED</div>
+            <div className="text-left pl-2">SIM_STATUS: CLONED<br/>GPS: STREAMING<br/>ROOT_ACCESS: GRANTED</div>
+          </div>
+
+          <p className="text-red-900 text-[8px] animate-pulse tracking-widest mt-12">
+            REMOTE_SESSION_ACTIVE: VOID_HACKER_666
+          </p>
+        </div>
+      )}
+
+      <div className="fixed bottom-4 left-4 z-[4000] text-[8px] text-red-950 font-terminal opacity-50 uppercase">
+        Memory: 100% Full | CPU: 92°C | Battery: 1% (Fake)
       </div>
     </div>
   );
